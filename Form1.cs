@@ -6,11 +6,14 @@ using System.Drawing;
 using System.Text;
 using System.IO;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace AtomOneBit
 {
     public partial class Form1 : Form
     {
+
+        string currentFile = "";
         public Form1()
         {
             InitializeComponent();
@@ -18,11 +21,63 @@ namespace AtomOneBit
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            
+            
+        }
+
+        private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
+        {
+            
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            
+            
+        }
+
+        private void normalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pictureBox1.SizeMode = PictureBoxSizeMode.Normal;
+        }
+
+        private void stretchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+        }
+
+        private void autoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //pictureBox1.SizeMode = PictureBoxSizeMode.AutoSize;
+        }
+
+        private void centerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
+        }
+
+        private void zoomToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Created by Jason Lopez\n\rAtomSoftTech.com\n\rAtomSoft@gmail.com", "Some info", MessageBoxButtons.OK);
+        }
+
+        private void quitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             if (MessageBox.Show("Are you sure?", "Quit", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 this.Close();
         }
 
-        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        private void openToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             string UserOutput = "";
 
@@ -31,7 +86,7 @@ namespace AtomOneBit
 
             string imgPath = openFileDialog1.FileName;
 
-            if(!File.Exists(imgPath))
+            if (!File.Exists(imgPath))
             {
                 MessageBox.Show("File does not exist!", "File Error");
                 return;
@@ -39,11 +94,13 @@ namespace AtomOneBit
 
             UserOutput = "// Original File Path: " + imgPath + Environment.NewLine;
 
+            currentFile = imgPath;
+
             BinaryReader imgBin = new BinaryReader(File.Open(imgPath, FileMode.Open));
 
             byte[] bmpHeader = imgBin.ReadBytes(2);
 
-            if((bmpHeader[0] != 0x42) || (bmpHeader[1] != 0x4d))
+            if ((bmpHeader[0] != 0x42) || (bmpHeader[1] != 0x4d))
             {
                 MessageBox.Show("Not a BMP at all!");
                 imgBin.Close();
@@ -63,18 +120,19 @@ namespace AtomOneBit
             }
 
             //Width Location 4 bytes
-            imgBin.BaseStream.Seek(0x0012,0);
+            imgBin.BaseStream.Seek(0x0012, 0);
 
             byte[] imgWidth = imgBin.ReadBytes(4);
             uint myWidth = BitConverter.ToUInt32(imgWidth, 0);
-
-            UserOutput += "// Width: " + myWidth + Environment.NewLine;
 
             //Height is next 4 Bytes
             byte[] imgHeight = imgBin.ReadBytes(4);
             uint myHeight = BitConverter.ToUInt32(imgHeight, 0);
 
-            UserOutput += "// Height: " + myHeight + Environment.NewLine;
+            byte[] userData = { (byte)myWidth, (byte)myHeight };
+
+            UserOutput += "// Width: " + myWidth + "[0x" + myWidth.ToString("X2") + "]" + Environment.NewLine;
+            UserOutput += "// Height: " + myHeight + "[0x" + myHeight.ToString("X2") + "]" + Environment.NewLine;
 
             //Data Offset
             imgBin.BaseStream.Seek(0x000A, 0);
@@ -100,30 +158,44 @@ namespace AtomOneBit
                 scanLine += (int)myBytePadding;
 
             // Seek to last scan line
-            long lastLine = myOffset + ((myHeight-1) * scanLine);
+            long lastLine = myOffset + ((myHeight - 1) * scanLine);
 
-            byte[] myLineBuff = new byte[scanLine];
+            int bytesWeNeed = (int)myBytes;
+            int arrarySize = (bytesWeNeed * (int)myHeight) + 2;
+
+            byte[] myLineBuff = new byte[bytesWeNeed];
+
+            string[] fileNameSplit = imgPath.Split('\\');
+            string[] imgNameSplit = fileNameSplit[fileNameSplit.Length - 1].Split('.');
+            string myName = imgNameSplit[imgNameSplit.Length - 1];
+
+
+            UserOutput += Environment.NewLine + "unsigned char " + myName + "[" + arrarySize.ToString() + "] = {";
+
+
+            //Add Width and Height
+            UserOutput += Environment.NewLine + "    0x" + BitConverter.ToString(userData, 0).Replace("-", ", 0x") + ", ";
 
             // Grab Line and loop lines in reverse
-            for (int i=0; i < myHeight; i++)
+            for (int i = 0; i < myHeight; i++)
             {
                 imgBin.BaseStream.Seek(lastLine, 0);
 
-                myLineBuff = imgBin.ReadBytes(scanLine);
+                myLineBuff = imgBin.ReadBytes(bytesWeNeed);
 
-                UserOutput += Environment.NewLine + "0x" + BitConverter.ToString(myLineBuff, 0).Replace("-", ", 0x");
+                UserOutput += Environment.NewLine + "    0x" + BitConverter.ToString(myLineBuff, 0).Replace("-", ", 0x");
                 lastLine -= scanLine;
             }
 
-            pictureBox1.Image = Image.FromStream(imgBin.BaseStream);
+            UserOutput += Environment.NewLine + "};";
+            imgBin.Close();
+
+            pictureBox1.ImageLocation = currentFile;
+            pictureBox1.Load();
+
+            //pictureBox1.Image = Image.FromStream(imgBin.BaseStream);
 
             txtSource.Text = UserOutput;
-            imgBin.Close();
-        }
-
-        private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
-        {
-            
         }
     }
 }
