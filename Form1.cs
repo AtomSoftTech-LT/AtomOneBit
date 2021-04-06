@@ -49,6 +49,19 @@ namespace AtomOneBit
                 return;
             }
 
+            //Width Location 4 bytes
+            imgBin.BaseStream.Seek(0x0012,0);
+
+            byte[] imgWidth = imgBin.ReadBytes(4);
+            uint myWidth = BitConverter.ToUInt32(imgWidth, 0);
+
+            UserOutput += "// Width: " + myWidth + Environment.NewLine;
+
+            byte[] imgHeight = imgBin.ReadBytes(4);
+            uint myHeight = BitConverter.ToUInt32(imgHeight, 0);
+
+            UserOutput += "// Height: " + myHeight + Environment.NewLine;
+
             txtSource.Text = UserOutput;
             imgBin.Close();
         }
