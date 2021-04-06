@@ -81,6 +81,42 @@ namespace AtomOneBit
             byte[] imgOffset = imgBin.ReadBytes(4);
             long myOffset = BitConverter.ToUInt32(imgOffset, 0);
 
+            long myBytes = myWidth / 8;
+            long myBitPadding = 8 - (myWidth % 8);
+
+            // Round to end of byte
+            if (myBitPadding > 0)
+                myBytes++;
+
+            long myBytePadding = 0;
+
+            if (myBytes % 4 > 0)
+                myBytePadding = 4 - (myBytes % 4);
+
+            int scanLine = (int)myBytes;
+
+            // Add padding
+            if (myBytePadding > 0)
+                scanLine += (int)myBytePadding;
+
+            // Seek to last scan line
+            long lastLine = myOffset + ((myHeight-1) * scanLine);
+
+            byte[] myLineBuff = new byte[scanLine];
+
+            // Grab Line and loop lines in reverse
+            for (int i=0; i < myHeight; i++)
+            {
+                imgBin.BaseStream.Seek(lastLine, 0);
+
+                myLineBuff = imgBin.ReadBytes(scanLine);
+
+                UserOutput += Environment.NewLine + "0x" + BitConverter.ToString(myLineBuff, 0).Replace("-", ", 0x");
+                lastLine -= scanLine;
+            }
+
+            pictureBox1.Image = Image.FromStream(imgBin.BaseStream);
+
             txtSource.Text = UserOutput;
             imgBin.Close();
         }
