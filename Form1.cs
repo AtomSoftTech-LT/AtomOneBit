@@ -184,9 +184,13 @@ namespace AtomOneBit
                 myLineBuff = imgBin.ReadBytes(bytesWeNeed);
 
                 UserOutput += Environment.NewLine + "    0x" + BitConverter.ToString(myLineBuff, 0).Replace("-", ", 0x");
+
+                if(i != myHeight -1)
+                    UserOutput += ", ";
+
                 lastLine -= scanLine;
             }
-
+            
             UserOutput += Environment.NewLine + "};";
             imgBin.Close();
 
