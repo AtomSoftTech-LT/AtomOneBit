@@ -167,7 +167,7 @@ namespace AtomOneBit
 
             string[] fileNameSplit = imgPath.Split('\\');
             string[] imgNameSplit = fileNameSplit[fileNameSplit.Length - 1].Split('.');
-            string myName = imgNameSplit[imgNameSplit.Length - 1];
+            string myName = imgNameSplit[0];
 
 
             UserOutput += Environment.NewLine + "unsigned char " + myName + "[" + arrarySize.ToString() + "] = {";
