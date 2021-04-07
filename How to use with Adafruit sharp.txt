@@ -1,0 +1,47 @@
+/*
+-------------------------------------------------------
+   ADD THIS TO Adafruit_SharpMem.cpp
+-------------------------------------------------------
+*/
+
+void Adafruit_SharpMem::atomImage(int16_t x, int16_t y, unsigned char *imgBuff) {
+  
+  uint8_t myWidth = *imgBuff++;
+  uint8_t myHeight = *imgBuff++;
+  uint8_t myBC = *imgBuff++;
+  unsigned char tempBuff = 0;
+
+  int16_t i, q, z= 0;
+  int16_t newY = y;
+  int16_t newX = x;
+
+  for(i=0;i<myHeight;i++) {
+    newX = x;
+    for(z = 0; z < myBC; z++)
+    {
+      tempBuff = *imgBuff++;
+
+      for(q=0;q<8;q++)
+      {        
+        if(tempBuff & 0x80)
+          drawPixel(newX,newY,1);
+        else
+          drawPixel(newX,newY,0);
+          
+        newX++;
+        tempBuff <<= 1;
+      }
+    }
+    newY++;
+
+  }
+}
+
+/*
+-------------------------------------------------------
+   ADD THIS TO Adafruit_SharpMem.h
+-------------------------------------------------------
+*/
+
+  void atomImage(int16_t x, int16_t y, unsigned char *buff);
+
