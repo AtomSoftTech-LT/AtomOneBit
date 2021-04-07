@@ -158,10 +158,10 @@ namespace AtomOneBit
                 scanLine += (int)myBytePadding;
 
             // Seek to last scan line
-            long lastLine = myOffset + ((myHeight - 1) * scanLine);
+            long lastLine = myOffset + (myHeight * scanLine);
 
             int bytesWeNeed = (int)myBytes;
-            int arrarySize = (bytesWeNeed * (int)myHeight) + 2;
+            int arrarySize = (bytesWeNeed * (int)myHeight) + 3;
 
             byte[] myLineBuff = new byte[bytesWeNeed];
 
@@ -174,21 +174,30 @@ namespace AtomOneBit
 
 
             //Add Width and Height
-            UserOutput += Environment.NewLine + "    0x" + BitConverter.ToString(userData, 0).Replace("-", ", 0x") + ", ";
+            UserOutput += Environment.NewLine + "    0x" + BitConverter.ToString(userData, 0).Replace("-", ", 0x") + ", 0x" + bytesWeNeed.ToString("X2") +  ", ";
+
+            int newPad = 8 - (int)myBitPadding;
+            int addData = 0xFF >> newPad;
+
+            byte OrThis = (byte)addData;
 
             // Grab Line and loop lines in reverse
             for (int i = 0; i < myHeight; i++)
             {
+                lastLine -= scanLine;
+
                 imgBin.BaseStream.Seek(lastLine, 0);
 
                 myLineBuff = imgBin.ReadBytes(bytesWeNeed);
+                int orTemp = myLineBuff[myLineBuff.Length - 1] | OrThis;
+                myLineBuff[myLineBuff.Length - 1] = (byte)orTemp;
 
                 UserOutput += Environment.NewLine + "    0x" + BitConverter.ToString(myLineBuff, 0).Replace("-", ", 0x");
 
                 if(i != myHeight -1)
                     UserOutput += ", ";
 
-                lastLine -= scanLine;
+
             }
             
             UserOutput += Environment.NewLine + "};";
